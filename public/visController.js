@@ -117,6 +117,19 @@ define(function (require) {
             size: _.get(layerParams, 'markerSize', 'm')
           };
           map.addPOILayer(layerParams.savedSearchId, points, options);
+
+          const geoField = getGeoField();
+          if (geoField) {
+            const pointFilters = _.map(points, function(point) {
+              const pointFilter = {geo_distance: {distance: "1km"}};
+              pointFilter.geo_distance[geoField] = {
+                  "lat" : point.latlng.lat,
+                  "lon" : point.latlng.lng
+              }
+              return pointFilter;
+            });
+            geoFilter.add(pointFilters, geoField, $scope.vis.indexPattern);
+          }
         });
       });
     });
