@@ -117,6 +117,19 @@ define(function (require) {
             size: _.get(layerParams, 'markerSize', 'm')
           };
           map.addPOILayer(layerParams.savedSearchId, points, options);
+
+          const geoField = getGeoField();
+          if (geoField) {
+            const pointFilters = _.map(points, function(point) {
+              const pointFilter = {geo_distance: {distance: "1km"}};
+              pointFilter.geo_distance[geoField] = {
+                  "lat" : point.latlng.lat,
+                  "lon" : point.latlng.lng
+              }
+              return pointFilter;
+            });
+            geoFilter.add(pointFilters, geoField, $scope.vis.indexPattern);
+          }
         });
       });
     });
@@ -140,15 +153,7 @@ define(function (require) {
         chartData.geoJson.properties.allmax = geoMinMax.max;
 
         //add overlay layer to provide visibility of filtered area
-        let fieldName;
-        if ($scope.vis.params.filterByShape && $scope.vis.params.shapeField) {
-          fieldName = $scope.vis.params.shapeField;
-        } else {
-          const agg = _.get(chartData, 'geohashGridAgg');
-          if (agg) {
-            fieldName = agg.fieldName();
-          }
-        }
+        let fieldName = getGeoField();
         if (fieldName) {
           map.addFilters(geoFilter.toGeoJson(fieldName));
         }
@@ -169,6 +174,26 @@ define(function (require) {
       resizeChecker.destroy();
       if (map) map.destroy();
     });
+
+    /**
+     * Field used for Geospatial filtering can be set in multiple places
+     * 1) field specified by geohash_grid aggregation
+     * 2) field specified under options in event no aggregation is used
+     *
+     * Use this method to locate the field
+     */
+    function getGeoField() {
+      let fieldName = null;
+      if ($scope.vis.params.filterByShape && $scope.vis.params.shapeField) {
+        fieldName = $scope.vis.params.shapeField;
+      } else {
+        const agg = utils.getAggConfig($scope.vis.aggs, 'segment');
+        if (agg) {
+          fieldName = agg.fieldName();
+        }
+      }
+      return fieldName;
+    }
 
     function drawWmsOverlays() {
       map.clearWMSOverlays();
