@@ -16,7 +16,7 @@ define(function (require) {
       });
 
       if (existingFilter) {
-        let geoFilters = [newFilter];
+        let geoFilters = _.flatten([newFilter]);
         let type = '';
         if (_.has(existingFilter, 'or')) {
           geoFilters = geoFilters.concat(existingFilter.or);
@@ -38,6 +38,9 @@ define(function (require) {
           alias: filterAlias(field, geoFilters.length)
         });
       } else {
+        if (_.isArray(newFilter)) {
+          newFilter = { or: newFilter };
+        }
         newFilter.meta = { 
           negate: false, index: indexPatternName, key: field 
         };
