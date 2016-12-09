@@ -40,6 +40,7 @@ define(function (require) {
         iconSize: iconSize,
         iconAnchor: [iconSize[0]/2, iconSize[1]],
         className: "vector-marker",
+        popupAnchor: [0, -10]
       });
     }
     
@@ -264,6 +265,24 @@ define(function (require) {
       this._layerControl.addOverlay(featureGroup, layerName);
       this._poiLayers.push(featureGroup);
     };
+
+    function appendButton (options) {
+      var button = L.DomUtil.create('button', options.className || '', options.container);
+      button.innerHTML = options.text;
+
+      L.DomEvent
+        .on(button, 'click', L.DomEvent.stopPropagation)
+        .on(button, 'mousedown', L.DomEvent.stopPropagation)
+        .on(button, 'dblclick', L.DomEvent.stopPropagation)
+        .on(button, 'mouseover', L.DomEvent.stopPropagation)
+        .on(button, 'mouseout', L.DomEvent.stopPropagation)
+        .on(button, 'mouseover', L.DomEvent.preventDefault)
+        .on(button, 'mouseout', L.DomEvent.preventDefault)
+        .on(button, 'click', L.DomEvent.preventDefault)
+        .on(button, 'click', options.callback);
+
+      return button;
+    }
 
     /**
      * Switch type of data overlay for map:

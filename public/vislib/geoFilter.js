@@ -119,8 +119,10 @@ define(function (require) {
     function isGeoFilter(filter, field) {
       if (filter.meta.key === field
         || _.has(filter, 'geo_bounding_box.' + field)
+        || _.has(filter, 'geo_distance.' + field)
         || _.has(filter, 'geo_polygon.' + field)
         || _.has(filter, 'or[0].geo_bounding_box.' + field)
+        || _.has(filter, 'or[0].geo_distance.' + field)
         || _.has(filter, 'or[0].geo_polygon.' + field)
         || _.has(filter, 'geo_shape.' + field)
         || _.has(filter, 'or[0].geo_shape.' + field)) {
