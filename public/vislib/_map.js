@@ -252,14 +252,45 @@ define(function (require) {
     TileMapMap.prototype.addPOILayer = function (layerName, points, options) {
       const featureGroup = new L.FeatureGroup();
       points.forEach(function(point) {
-        featureGroup.addLayer(
-          L.marker(
-            point.latlng, 
-            {
-              icon: markerIcon(options.color, options.size),
-              title: point.label
-            })
-          );
+        const poi = L.marker(
+          point.latlng, 
+          {
+            icon: markerIcon(options.color, options.size)
+          });
+        const popupContent = L.DomUtil.create('div');
+        L.DomEvent
+          .on(popupContent, 'mouseover', L.DomEvent.stopPropagation)
+          .on(popupContent, 'mouseout', L.DomEvent.stopPropagation)
+          .on(popupContent, 'mouseover', L.DomEvent.preventDefault)
+          .on(popupContent, 'mouseout', L.DomEvent.preventDefault);
+        const label = L.DomUtil.create('p', '', popupContent);
+        L.DomEvent
+          .on(label, 'mouseover', L.DomEvent.stopPropagation)
+          .on(label, 'mouseout', L.DomEvent.stopPropagation)
+          .on(label, 'mouseover', L.DomEvent.preventDefault)
+          .on(label, 'mouseout', L.DomEvent.preventDefault)
+        const buttonContainer = L.DomUtil.create('div', '', popupContent);
+        L.DomEvent
+          .on(buttonContainer, 'mouseover', L.DomEvent.stopPropagation)
+          .on(buttonContainer, 'mouseout', L.DomEvent.stopPropagation)
+          .on(buttonContainer, 'mouseover', L.DomEvent.preventDefault)
+          .on(buttonContainer, 'mouseout', L.DomEvent.preventDefault);
+        appendButton({
+          text: 'click me',
+          container: buttonContainer,
+          callback: function() {
+            console.log("you clicked me, param1", param1);
+          }
+        });
+        label.innerHTML = point.label;
+        poi.bindPopup(popupContent);
+        /*poi.on('mouseover', function (e) {
+            this.openPopup();
+        });
+        poi.on('mouseout', function (e) {
+            this.closePopup();
+        });*/
+        featureGroup.addLayer(poi);
       });
       this.map.addLayer(featureGroup);
       this._layerControl.addOverlay(featureGroup, layerName);
