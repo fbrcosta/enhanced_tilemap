@@ -255,7 +255,7 @@ define(function (require) {
         const poi = L.marker(
           point.latlng, 
           {
-            icon: markerIcon(options.color, options.size)
+           icon: markerIcon(options.color, options.size)
           });
         const popupContent = L.DomUtil.create('div');
         L.DomEvent
