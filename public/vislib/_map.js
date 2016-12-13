@@ -327,10 +327,8 @@ define(function (require) {
         opacity: 1,
         fillOpacity: 0.75
       }
-      this._filters = L.geoJson(filters, {
-        clickable: false,
-        style: style
-      });
+      this._filters = L.featureGroup(filters);
+      this._filters.setStyle(style);
       if (isVisible) this.map.addLayer(this._filters);
       this._layerControl.addOverlay(this._filters, "Applied Filters");
     };
