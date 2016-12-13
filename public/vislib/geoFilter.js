@@ -38,11 +38,16 @@ define(function (require) {
           alias: filterAlias(field, geoFilters.length)
         });
       } else {
+        let numFilters = 1;
         if (_.isArray(newFilter)) {
+          numFilters = newFilter.length;
           newFilter = { or: newFilter };
         }
-        newFilter.meta = { 
-          negate: false, index: indexPatternName, key: field 
+        newFilter.meta = {
+          alias: filterAlias(field, numFilters), 
+          negate: false, 
+          index: indexPatternName, 
+          key: field 
         };
         queryFilter.addFilters(newFilter);
       }

@@ -3,6 +3,7 @@ define(function (require) {
     var _ = require('lodash');
     var $ = require('jquery');
     var L = require('leaflet');
+    var LDrawToolbench = require('./LDrawToolbench');
     const utils = require('plugins/enhanced_tilemap/utils');
     var formatcoords = require('./../lib/formatcoords/index');
     require('./../lib/leaflet.mouseposition/L.Control.MousePosition.css');
@@ -96,7 +97,7 @@ define(function (require) {
     }
 
     TileMapMap.prototype._addDrawControl = function () {
-      if (this._boundingControl) return;
+      if (this._drawControl) return;
 
       //create Markers feature group and add saved markers 
       this._drawnItems = new L.FeatureGroup();
@@ -141,8 +142,10 @@ define(function (require) {
         drawOptions.edit.remove = false;
       }
 
-      this._boundingControl = new L.Control.Draw(drawOptions);
-      this.map.addControl(this._boundingControl);
+      this._drawControl = new L.Control.Draw(drawOptions);
+      this.map.addControl(this._drawControl);
+
+      this._toolbench = new LDrawToolbench(this.map, this._drawControl);
     };
 
     TileMapMap.prototype._addSetViewControl = function () {
@@ -233,7 +236,7 @@ define(function (require) {
     TileMapMap.prototype.destroy = function () {
       if (this._label) this._label.removeFrom(this.map);
       if (this._fitControl) this._fitControl.removeFrom(this.map);
-      if (this._boundingControl) this._boundingControl.removeFrom(this.map);
+      if (this._drawControl) this._drawControl.removeFrom(this.map);
       if (this._markers) this._markers.destroy();
       syncMaps.remove(this.map);
       this.map.remove();
@@ -257,63 +260,18 @@ define(function (require) {
           {
            icon: markerIcon(options.color, options.size)
           });
-        const popupContent = L.DomUtil.create('div');
-        L.DomEvent
-          .on(popupContent, 'mouseover', L.DomEvent.stopPropagation)
-          .on(popupContent, 'mouseout', L.DomEvent.stopPropagation)
-          .on(popupContent, 'mouseover', L.DomEvent.preventDefault)
-          .on(popupContent, 'mouseout', L.DomEvent.preventDefault);
-        const label = L.DomUtil.create('p', '', popupContent);
-        L.DomEvent
-          .on(label, 'mouseover', L.DomEvent.stopPropagation)
-          .on(label, 'mouseout', L.DomEvent.stopPropagation)
-          .on(label, 'mouseover', L.DomEvent.preventDefault)
-          .on(label, 'mouseout', L.DomEvent.preventDefault)
-        const buttonContainer = L.DomUtil.create('div', '', popupContent);
-        L.DomEvent
-          .on(buttonContainer, 'mouseover', L.DomEvent.stopPropagation)
-          .on(buttonContainer, 'mouseout', L.DomEvent.stopPropagation)
-          .on(buttonContainer, 'mouseover', L.DomEvent.preventDefault)
-          .on(buttonContainer, 'mouseout', L.DomEvent.preventDefault);
-        appendButton({
-          text: 'click me',
-          container: buttonContainer,
-          callback: function() {
-            console.log("you clicked me, param1", param1);
-          }
-        });
-        label.innerHTML = point.label;
-        poi.bindPopup(popupContent);
-        /*poi.on('mouseover', function (e) {
-            this.openPopup();
-        });
-        poi.on('mouseout', function (e) {
-            this.closePopup();
-        });*/
         featureGroup.addLayer(poi);
       });
       this.map.addLayer(featureGroup);
       this._layerControl.addOverlay(featureGroup, layerName);
       this._poiLayers.push(featureGroup);
+
+      //Add tool to l.draw.toolbar so users can filter by POIs
+      if (this._poiLayers.length === 1) {
+        if (!this._toolbench) this._addDrawControl();
+        this._toolbench.addTool();
+      }
     };
-
-    function appendButton (options) {
-      var button = L.DomUtil.create('button', options.className || '', options.container);
-      button.innerHTML = options.text;
-
-      L.DomEvent
-        .on(button, 'click', L.DomEvent.stopPropagation)
-        .on(button, 'mousedown', L.DomEvent.stopPropagation)
-        .on(button, 'dblclick', L.DomEvent.stopPropagation)
-        .on(button, 'mouseover', L.DomEvent.stopPropagation)
-        .on(button, 'mouseout', L.DomEvent.stopPropagation)
-        .on(button, 'mouseover', L.DomEvent.preventDefault)
-        .on(button, 'mouseout', L.DomEvent.preventDefault)
-        .on(button, 'click', L.DomEvent.preventDefault)
-        .on(button, 'click', options.callback);
-
-      return button;
-    }
 
     /**
      * Switch type of data overlay for map:
@@ -466,6 +424,14 @@ define(function (require) {
 
       this.map.on('setview:fitBounds', function (e) {
         self._fitBounds();
+      });
+
+      this.map.on('toolbench:poiFilter', function (e) {
+        self._callbacks.poiFilter({
+          chart: self._chartData,
+          poiLayers: self._poiLayers,
+          radius: _.get(e, 'radius', 10)
+        });
       });
 
       this.map.on('draw:created', function (e) {
