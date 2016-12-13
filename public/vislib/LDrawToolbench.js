@@ -11,14 +11,22 @@ define(function (require) {
   LDrawToolbench.prototype.addTool = function () {
     const self = this;
     _createButton({
-      title: "Filter by POI Layers",
-      className: 'fa fa-circle',
+      title: "Create geo_distance filter around POIs",
+      className: 'leaflet-draw-draw-circle leaflet-toolbench-tool',
       container: this._toolbarContainer,
       callback: function() {
         self.displayActions();
       },
       context: {}
     });
+  }
+
+  LDrawToolbench.prototype.removeTools = function () {
+    const tools = this._toolbarContainer.getElementsByClassName('leaflet-toolbench-tool');
+    for (var i = 0; i < tools.length; i++) {
+      const elem = tools[i];
+      elem.parentNode.removeChild(elem);
+    }
   }
 
   LDrawToolbench.prototype.clearActions = function () {

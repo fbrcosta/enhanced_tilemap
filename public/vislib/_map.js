@@ -250,6 +250,8 @@ define(function (require) {
         self.map.removeLayer(layer);
       });
       this._poiLayers = [];
+
+      if (this._toolbench) this._toolbench.removeTools();
     };
 
     TileMapMap.prototype.addPOILayer = function (layerName, points, options) {
